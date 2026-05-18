@@ -1,5 +1,20 @@
-# nextframe_opencv
-# OpenCV 차량 번호판 인식 프로젝트
+# VisionFrame
 
-## 프로젝트 소개
-리눅스 환경에서 OpenCV를 활용하여 차량 번호판 영역을 검출하는 프로젝트입니다.
+OpenCV 기반 차량 번호판 검출 프로젝트
+
+## Team Members
+- 양진희
+- 노건우
+- 송현우
+- 김기욱
+- 이장우
+
+## Project Goal
+영상 전처리 및 번호판 영역 검출 구현
+
+## Tech Stack
+- C++/Python
+- OpenCV
+- Linux (Ubuntu)
+
+
