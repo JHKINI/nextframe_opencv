@@ -1,4 +1,4 @@
-# VisionFrame
+# NextFrame
 
 OpenCV 기반 차량 번호판 검출 프로젝트
 
@@ -16,5 +16,10 @@ OpenCV 기반 차량 번호판 검출 프로젝트
 - C++/Python
 - OpenCV
 - Linux (Ubuntu)
-
+- 
+## Features
+- 영상 입력 처리
+- 이미지 필터 적용
+- 번호판 후보 영역 검출
+- 검출 영역 시각화
 
