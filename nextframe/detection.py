@@ -1,21 +1,42 @@
-# detection.py (팀원 5 담당 - 통합 테스트용 번호판 탐지 빈 껍데기 모듈)
 import cv2
+from ultralytics import YOLO
 
-def find_plate(edge_frame, original_frame):
-    """
-    [통합 가이드]
-    팀원 1의 전처리 결과(edge_frame)와 main.py의 원본 영상(original_frame)을 받아와,
-    팀원 3의 알고리즘을 거쳐 번호판 사각형 영역만 잘라내어(Crop) 반환하는 함수입니다.
-    """
-    
-    # ------------------------------------------------------------------
-    # 💡 [추후 통합 예정] 팀원 3이 코드를 완성하면 이 자리에 들어옵니다.
-    #    - 윤곽선(Contour) 기반 번호판 영역 탐색 기법 적용
-    #    - 번호판 위치 사각형 바운딩 박스 표시 및 Crop 로직 구현
-    # ------------------------------------------------------------------
-    
-    # [임시 코드] 팀원 3의 코드가 오기 전까지 에러 방지를 위해 
-    # 들어온 원본 프레임을 '잘라낸 번호판 이미지'인 것처럼 그대로 다음 단계로 넘겨줍니다.
-    cropped_plate = original_frame
-    
-    return cropped_plate
+class PlateDetector:
+    # 💡 기본 가중치 경로를 runs 폴더 내부의 train-5 진짜 위치로 수정했습니다!
+    def __init__(self, model_path="runs/detect/train-5/weights/best.pt"):
+        """
+        YOLOv11 가중치 모델을 초기화합니다.
+        (기욱님이 고도화한 150 에포크 뻥튀기 모델 경로를 지정)
+        """
+        self.model = YOLO(model_path)
+
+    def detect_frame(self, frame, conf_thres=0.45):
+        """
+        프레임을 입력받아 번호판을 탐지하고 시각화 및 크롭을 수행합니다.
+        """
+        results = self.model(frame, verbose=False)[0]
+        contour_img = frame.copy()
+        cropped_plate_bin = None
+
+        for box in results.boxes:
+            cls_id = int(box.cls[0])
+            conf = float(box.conf[0])
+            
+            if cls_id == 0 and conf > conf_thres:  
+                x1, y1, x2, y2 = map(int, box.xyxy[0])
+                
+                # 📺 메인 화면 사각형 및 텍스트 시각화
+                cv2.rectangle(contour_img, (x1, y1), (x2, y2), (0, 255, 0), 2)
+                cv2.putText(contour_img, f"Plate {conf:.2f}", (x1, y1 - 5),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+                
+                # 🔍 번호판 영역 다이렉트 크롭
+                vehicle_plate = frame[y1:y2, x1:x2]
+                
+                if vehicle_plate.size > 0:
+                    plate_gray = cv2.cvtColor(vehicle_plate, cv2.COLOR_BGR2GRAY)
+                    _, cropped_plate_bin = cv2.threshold(
+                        plate_gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU
+                    )
+
+        return contour_img, cropped_plate_bin
