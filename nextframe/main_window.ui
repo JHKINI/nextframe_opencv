@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
  <class>MainWindow</class>
@@ -248,3 +249,255 @@
  <resources/>
  <connections/>
 </ui>
+=======
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1280</width>
+    <height>757</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>NEXT FRAME - Intelligent License Plate Recognition System</string>
+  </property>
+  <property name="styleSheet">
+   <string>
+    QMainWindow {
+        background-color: #121214;
+    }
+    QWidget #centralwidget {
+        background-color: #121214;
+    }
+    QLabel {
+        color: #E2E8F0;
+        font-family: 'Segoe UI', 'Malgun Gothic', sans-serif;
+    }
+   </string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QVBoxLayout" name="main_layout">
+    <property name="spacing">
+     <number>15</number>
+    </property>
+    <property name="leftMargin">
+     <number>20</number>
+    </property>
+    <property name="topMargin">
+     <number>20</number>
+    </property>
+    <property name="rightMargin">
+     <number>20</number>
+    </property>
+    <property name="bottomMargin">
+     <number>20</number>
+    </property>
+    <item>
+     <widget class="QFrame" name="header_frame">
+      <property name="minimumSize">
+       <size>
+        <width>0</width>
+        <height>60</height>
+       </size>
+      </property>
+      <property name="styleSheet">
+       <string>
+        QFrame #header_frame {
+            background-color: #1A1A1E;
+            border-radius: 8px;
+            border: 1px solid #2A2A32;
+        }
+       </string>
+      </property>
+      <layout class="QHBoxLayout" name="header_layout">
+       <property name="leftMargin">
+        <number>20</number>
+       </property>
+       <property name="rightMargin">
+        <number>20</number>
+       </property>
+       <item>
+        <widget class="QLabel" name="title_label">
+         <property name="styleSheet">
+          <string>font-size: 18px; font-weight: 700; color: #FFFFFF;</string>
+         </property>
+         <property name="text">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;🚗 NEXT FRAME &lt;span style=&quot; color:#10b981;&quot;&gt;| 차량 번호판 검출 시스템&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <spacer name="horizontalSpacer">
+         <property name="orientation">
+          <enum>Qt::Orientation::Horizontal</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>40</width>
+           <height>20</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+       <item>
+        <widget class="QPushButton" name="btn_play">
+         <property name="minimumSize">
+          <size>
+           <width>110</width>
+           <height>36</height>
+          </size>
+         </property>
+         <property name="styleSheet">
+          <string>
+           QPushButton {
+               background-color: #27272A;
+               color: #E4E4E7;
+               border: 1px solid #3F3F46;
+               border-radius: 6px;
+               font-weight: 600;
+               font-size: 13px;
+           }
+           QPushButton:hover {
+               background-color: #3F3F46;
+               border: 1px solid #52525B;
+           }
+           QPushButton:pressed {
+               background-color: #18181B;
+           }
+          </string>
+         </property>
+         <property name="text">
+          <string>일시정지</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </item>
+    <item>
+     <layout class="QHBoxLayout" name="video_layout">
+      <property name="spacing">
+       <number>15</number>
+      </property>
+      <item>
+       <widget class="QLabel" name="screen_main">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+          <horstretch>7</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="styleSheet">
+         <string>
+          QLabel #screen_main {
+              border: 1px solid #2A2A32;
+              background-color: #09090B;
+              border-radius: 10px;
+              font-size: 14px;
+              letter-spacing: 1px;
+              color: #71717A;
+          }
+         </string>
+        </property>
+        <property name="text">
+         <string>SYSTEM INITIALIZING...</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignmentFlag::AlignCenter</set>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <layout class="QVBoxLayout" name="side_layout">
+        <property name="spacing">
+         <number>10</number>
+        </property>
+        <item>
+         <widget class="QLabel" name="label_thresh_title">
+          <property name="styleSheet">
+           <string>font-size: 13px; font-weight: 600; color: #A1A1AA; margin-top: 5px;</string>
+          </property>
+          <property name="text">
+           <string>⚙️ 이진화 영상 분석 (Advanced Thresh)</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="screen_thresh">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+            <horstretch>3</horstretch>
+            <verstretch>3</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="styleSheet">
+           <string>
+            QLabel #screen_thresh {
+                border: 1px solid #2A2A32;
+                background-color: #09090B;
+                border-radius: 8px;
+                color: #52525B;
+            }
+           </string>
+          </property>
+          <property name="text">
+           <string>BINARY FEED</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignmentFlag::AlignCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="label_crop_title">
+          <property name="styleSheet">
+           <string>font-size: 13px; font-weight: 600; color: #A1A1AA; margin-top: 10px;</string>
+          </property>
+          <property name="text">
+           <string>🔍 실시간 번호판 추출 (ROI Crop)</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="screen_crop">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+            <horstretch>3</horstretch>
+            <verstretch>2</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="styleSheet">
+           <string>
+            QLabel #screen_crop {
+                border: 1px dashed #10B981;
+                background-color: #14241F;
+                border-radius: 8px;
+                color: #10B981;
+                font-weight: 600;
+                font-size: 12px;
+            }
+           </string>
+          </property>
+          <property name="text">
+           <string>WAITING FOR DETECTION...</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignmentFlag::AlignCenter</set>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+     </layout>
+    </item>
+   </layout>
+  </widget>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
+>>>>>>> main
