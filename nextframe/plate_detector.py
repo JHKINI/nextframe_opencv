@@ -91,7 +91,7 @@ class LicensePlateApp(QMainWindow):
         # 🧠 [기욱님의 분리된 추론 모듈 호출]
         # ==========================================================
         # 원본 프레임을 던져주면, 수정한 detection.py가 알아서 박스를 그리고 크롭까지 해서 반환합니다.
-        contour_img, cropped_plate_bin = self.detector.detect_frame(frame, conf_thres=0.30)
+        contour_img, cropped_plate_bin = self.detector.detect_frame(frame, conf_thres=0.25)
 
         # 📺 메인 화면 갱신
         self.display_image(contour_img, self.screen_main)
