@@ -20,7 +20,7 @@ class LicensePlateApp(QMainWindow):
         self.buffer_frames = 10         # 놓쳐도 몇 프레임 동안 유지할지 설정 (10프레임 = 약 0.3초)
         
         # 💡 분리된 클래스를 선언하여 모델을 로드합니다.
-        self.detector = PlateDetector("runs/detect/train-6/weights/best.pt") 
+        self.detector = PlateDetector("runs/detect/train-7/weights/best.pt") 
         
         self.video_path = "car.mp4"
         self.cap = cv2.VideoCapture(self.video_path)

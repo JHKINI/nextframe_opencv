@@ -2,7 +2,7 @@ import os
 from ultralytics import YOLO
 
 def main():
-    # 1. 기본 사전 학습 모델(yolo11n.pt) 로드
+    # 1. 기본 사전 학습 모델(yolo26n.pt) 로드
     model = YOLO("yolo26n.pt")
 
     # 2. 이동시킨 YOLODataset 폴더의 dataset.yaml 경로 설정
@@ -10,7 +10,7 @@ def main():
 
     print("🚀 YOLOv26 커스텀 번호판 데이터 뻥튀기 및 재학습을 시작합니다...")
     
-    # 3. YOLOv11 공식 인자명에 맞춘 실시간 데이터 증강 학습
+    # 3. YOLOv26 공식 인자명에 맞춘 실시간 데이터 증강 학습
     model.train(
         data=yaml_path,
         epochs=100,        # 150번 복습하며 매번 다른 형태의 변형 문제를 풀게 합니다.
@@ -19,7 +19,7 @@ def main():
         workers=2,         # 데이터 로드 프로세스 수
         device=0,          # GPU 사용 (RTX 5060)
         
-        # 🪄 [YOLOv11 공식 실시간 데이터 뻥튀기 파라미터 세팅]
+        # 🪄 [YOLOv26 공식 실시간 데이터 뻥튀기 파라미터 세팅]
         augment=True,      # 데이터 증강 기능 활성화
         degrees=15.0,      # 이미지를 무작위로 ±15도 회전 (카메라 각도 비틀림 대비)
         translate=0.1,     # 이미지를 상하좌우로 10%씩 평행 이동 (번호판 위치 다양화)

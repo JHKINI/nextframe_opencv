@@ -5,7 +5,7 @@ from ultralytics import YOLO
 class PlateDetector:
     def __init__(self, model_path="best.pt"):
         """
-        YOLOv11 가중치 모델을 초기화합니다.
+        YOLOv26 가중치 모델을 초기화합니다.
         """
         self.model = YOLO(model_path)
 
