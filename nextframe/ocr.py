@@ -7,6 +7,16 @@ reader = easyocr.Reader(['ko', 'en'], gpu=True)
 # 번호판 형식: 숫자2~3 + 한글1 + 숫자4
 PLATE_PATTERN = re.compile(r'^\d{2,3}[가-힣]\d{4}$')
 
+def correct_plate_text(text):
+    text = text.replace(' ', '').strip()
+
+    if len(text) == 8 and text.startswith('1'):
+        candidate = text[1:]
+        if is_valid_plate(candidate):
+            return candidate
+        
+    return text
+
 
 def is_valid_plate(text):
     """번호판 형식에 맞으면 True"""
@@ -34,6 +44,7 @@ def read_plate(cropped_plate):
 
     text = ''.join(results)
     text = re.sub(r'[^0-9가-힣]', '', text)
+    text = correct_plate_text(text)
 
     # ✅ 형식 검증: 안 맞으면 빈 문자열 반환
     if not is_valid_plate(text):
