@@ -1,20 +1,42 @@
-# ocr.py (팀원 5 담당 - 통합 테스트용 문자 인식 빈 껍데기 모듈)
+import easyocr
+import cv2
+import re
+
+reader = easyocr.Reader(['ko', 'en'], gpu=True)
+
+# 번호판 형식: 숫자2~3 + 한글1 + 숫자4
+PLATE_PATTERN = re.compile(r'^\d{2,3}[가-힣]\d{4}$')
+
+
+def is_valid_plate(text):
+    """번호판 형식에 맞으면 True"""
+    return bool(PLATE_PATTERN.match(text))
+
 
 def read_plate(cropped_plate):
-    """
-    [통합 가이드]
-    팀원 3이 잘라낸 번호판 이미지(cropped_plate)를 넘겨받아,
-    팀원 4의 OCR 모델을 거쳐 최종 문자열(String)을 반환하는 함수입니다.
-    """
-    
-    # ------------------------------------------------------------------
-    # 💡 [추후 통합 예정] 팀원 4가 코드를 완성하면 이 자리에 들어옵니다.
-    #    - 숫자/한글 이미지 데이터 분석 및 문자 예측 적용
-    #    - OCR(EasyOCR 등) 글자 인식 엔진 구동 및 텍스트 추출
-    # ------------------------------------------------------------------
-    
-    # [임시 코드] 팀원 4의 코드가 오기 전까지 에러 방지를 위해
-    # 화면에 출력될 가짜 차량 번호 텍스트를 임시로 지정하여 리턴합니다.
-    license_text = "인식 모델 대기 중"
-    
-    return license_text
+    if cropped_plate is None:
+        return ""  # 빈 문자열 = 유효 결과 없음
+
+    if len(cropped_plate.shape) == 2:
+        img = cv2.cvtColor(cropped_plate, cv2.COLOR_GRAY2RGB)
+    else:
+        img = cropped_plate
+
+    results = reader.readtext(
+        img,
+        detail=0,
+        paragraph=False,
+        allowlist='0123456789가나다라마거너더러머버서어저고노도로모보소오조구누두루무부수우주하허호배'
+    )
+
+    if len(results) == 0:
+        return ""
+
+    text = ''.join(results)
+    text = re.sub(r'[^0-9가-힣]', '', text)
+
+    # ✅ 형식 검증: 안 맞으면 빈 문자열 반환
+    if not is_valid_plate(text):
+        return ""
+
+    return text
