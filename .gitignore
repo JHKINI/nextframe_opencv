@@ -1,0 +1,13 @@
+# 1. 파이썬 임시 파일 무시
+__pycache__/
+*.pyc
+
+# 2. 결과물 이미지 폴더 무시
+saved_plates/
+
+# 3. 대용량 동영상 및 기타 데이터 무시
+*.mp4
+
+# 4. VS Code 설정 및 기타
+.vscode/
+.ipynb_checkpoints/
