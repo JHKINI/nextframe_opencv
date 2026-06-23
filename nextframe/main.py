@@ -1,93 +1,297 @@
-# main.py (팀원 5 담당 - 전체 기능 연결 및 시연 모듈)
+# main.py (이진화 제거 - 방법 A 적용 통합본)
+import sys
 import cv2
 import time
 import os
+import numpy as np
+from PySide6.QtWidgets import QApplication, QMainWindow
+from PySide6.QtUiTools import QUiLoader
+from PySide6.QtCore import QFile, QTimer, Qt
+from PySide6.QtGui import QImage, QPixmap
+from PIL import ImageFont, ImageDraw, Image
+from collections import Counter
 
-# [통합 단계] 통합 테스트용 전처리 v2 모듈 가져오기
 try:
     import preprocess_v2
 except ImportError:
     preprocess_v2 = None
 
-# [미래 통합 영역] 팀원 3, 4가 파일을 완성하면 아래 주석(#)을 해제할 예정입니다.
-# import detection
-# import ocr
+try:
+    from detection import PlateDetector
+    detector = PlateDetector()
+except ImportError:
+    detector = None
 
-def main():
-    print("==================================================")
-    print("[시스템] Next Frame 차량 번호판 인식 파이프라인 가동")
-    print("==================================================")
-    
-    # 1. 파일 경로 설정 (program/nextframe 폴더 기준)
-    video_filename = "car.mp4"
-    
-    # QA 작업: 파일이 현재 폴더에 진짜 존재하는지 선제적 체크 (팀원 5 업무)
-    if not os.path.exists(video_filename):
-        print(f"[경로 오류] '{video_filename}' 파일이 존재하지 않습니다.")
-        print(f"현재 작업 디렉토리: {os.getcwd()}")
-        print("💡 바탕화면/팀 프로젝트/program/nextframe 폴더 안에 car.mp4를 넣어주세요.")
-        return
+import ocr
 
-    cap = cv2.VideoCapture(video_filename)
-    print(f"[시스템] '{video_filename}' 동영상 스트리밍을 시작합니다.")
-    print(" -> 시연 종료 방법: 영상 화면을 클릭한 후 키보드의 'ESC' 키 입력\n")
-    
-    while cap.isOpened():
-        ret, frame = cap.read()
+
+# ==========================================================
+# 🈶 한글 폰트 출력 헬퍼
+# ==========================================================
+FONT_PATH = os.path.join(os.path.dirname(__file__), "malgun.ttf")
+if not os.path.exists(FONT_PATH):
+    FONT_PATH = "C:/Windows/Fonts/malgun.ttf"
+
+
+def put_text_kr(img, text, position, font_size=30, color=(0, 255, 0)):
+    """OpenCV(BGR) 이미지에 한글을 그려서 BGR 이미지로 반환. color는 RGB 순서."""
+    img_pil = Image.fromarray(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
+    draw = ImageDraw.Draw(img_pil)
+    try:
+        font = ImageFont.truetype(FONT_PATH, font_size)
+    except OSError:
+        font = ImageFont.load_default()
+    draw.text(position, text, font=font, fill=color)
+    return cv2.cvtColor(np.array(img_pil), cv2.COLOR_RGB2BGR)
+
+
+class LicensePlateApp(object):
+    def __init__(self):
+        loader = QUiLoader()
+        ui_file_path = os.path.join(os.path.dirname(__file__), "main_window.ui")
+        ui_file = QFile(ui_file_path)
+
+        if not ui_file.open(QFile.ReadOnly):
+            print(f"[파일 오류] '{ui_file_path}' 파일을 열 수 없습니다.")
+            sys.exit(-1)
+
+        self.window = loader.load(ui_file)
+        ui_file.close()
+
+        if not self.window:
+            print("[오류] UI 파일을 로드하는 데 실패했습니다.")
+            sys.exit(-1)
+
+        self.window.setWindowTitle("Next Frame - YOLO 딥러닝 번호판 인식 시스템 (통합 관제)")
+        self.window.setFixedSize(1200, 750)
+
+        self.btn_play = self.window.btn_play
+        self.screen_main = self.window.screen_main
+        self.screen_thresh = self.window.screen_thresh
+        self.screen_crop = self.window.screen_crop
+
+        self.video_filename = "car8.mp4"
+
+        if not os.path.exists(self.video_filename):
+            print(f"[경로 오류] '{self.video_filename}' 파일이 존재하지 않습니다.")
+            print("💡 program/nextframe 폴더 안에 car8.mp4를 넣어주세요.")
+            sys.exit()
+
+        self.cap = cv2.VideoCapture(self.video_filename)
+        print(f"[시스템] '{self.video_filename}' 동영상 파이프라인 가동을 시작합니다.")
+
+        self.btn_play.clicked.connect(self.toggle_video)
+        self.window.closeEvent = self.closeEvent
+
+        # 🚀 [사이클 제어 및 베스트 컷 변수]
+        self.is_tracking = False
+        # ✅ [변경] (흑백패딩본, 컬러패딩본) 쌍으로 저장
+        self.cycle_images = []
+        self.last_license_number = "인식 대기 중"
+
+        self.timer = QTimer()
+        self.timer.timeout.connect(self.update_pipeline)
+        self.timer.start(30)
+
+    def show(self):
+        self.window.show()
+
+    def update_pipeline(self):
+        ret, frame = self.cap.read()
         if not ret:
-            print("[시스템] 동영상 재생이 완료되었거나 프레임을 읽을 수 없습니다.")
-            break
-            
-        # 성능 평가(QA)를 위한 프레임별 처리 시간 측정 시작 (팀원 5 업무)
-        start_time = time.time()
-        
-        # --------------------------------------------------
-        # 2. [연동 완료] 팀원 1의 로직이 담긴 v2 전처리 함수 호출
-        # --------------------------------------------------
+            self.cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
+            return
+
+        # 1. FPS 계산
+        if not hasattr(self, 'prev_time'):
+            self.prev_time = time.time()
+
+        curr_time = time.time()
+        delta = curr_time - self.prev_time
+        fps = 0 if delta <= 0 else 1 / delta
+        self.prev_time = curr_time
+
+        # 2. 전처리 및 AI 탐지
+        t0 = time.time()  # ⏱️ [측정] 시작
+
         if preprocess_v2 and hasattr(preprocess_v2, 'apply_preprocessing'):
-            # 원본 프레임(frame)을 던져서 흑백/블러/엣지가 처리된 이미지(edge_frame)를 받아옴
             edge_frame = preprocess_v2.apply_preprocessing(frame)
         else:
-            # v2 파일이 없거나 매칭이 안 될 경우 에러 방지용 임시 처리
-            edge_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY) 
+            gray_feed = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+            blur = cv2.GaussianBlur(gray_feed, (5, 5), 0)
+            edge_frame = cv2.adaptiveThreshold(blur, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 2)
 
-        # --------------------------------------------------
-        # 3. [미래 연동 영역] 팀원 3 번호판 후보 영역 탐지 및 Crop
-        # --------------------------------------------------
-        # cropped_plate = detection.find_plate(edge_frame)
-        # 임시 대기 상태 코드 (팀원 3이 코드를 주면 위 주석을 풀고 아래를 대체합니다)
-        cropped_plate = edge_frame 
+        t1 = time.time()  # ⏱️ [측정] 전처리 끝
 
-        # --------------------------------------------------
-        # 4. [미래 연동 영역] 팀원 4 OCR 글자 인식 및 문자열 반환
-        # --------------------------------------------------
-        # license_number = ocr.read_plate(cropped_plate)
-        # 임시 대기 상태 코드 (팀원 4가 코드를 주면 위 주석을 풀고 아래를 대체합니다)
-        license_number = "인식 모델 대기 중"
+        if detector:
+            display_frame, cropped_plate, cropped_plate_color = detector.detect_frame(frame, conf_thres=0.25)
+        else:
+            display_frame = frame.copy()
+            cropped_plate = None
+            cropped_plate_color = None
 
-        # --------------------------------------------------
-        # 5. [시연 및 결과 출력] 팀원 5 담당 메인 업무
-        # --------------------------------------------------
-        # 모니터링 창 띄우기 (원본 영상과 전처리된 윤곽선 영상을 동시에 대조 시연)
-        cv2.imshow("Original Video (Input)", frame)
-        cv2.imshow("Preprocessed Video (Canny Edge)", edge_frame)
-        
-        # 중간 발표 양식에 약속된 연산 시간 계산 로직 미리 구현
+        t2 = time.time()  # ⏱️ [측정] YOLO 끝
+
+        # FPS (영문/숫자 → 기존 putText)
+        fps_text = f"FPS: {int(fps)}"
+        cv2.putText(display_frame, fps_text, (display_frame.shape[1] - 150, 40),
+                    cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2, cv2.LINE_AA)
+
+        # OCR 텍스트 (한글 → PIL 헬퍼)
+        ocr_text = f"OCR: {self.last_license_number}"
+        display_frame = put_text_kr(display_frame, ocr_text, (30, 30),
+                                    font_size=30, color=(0, 255, 0))
+
+        t3 = time.time()  # ⏱️ [측정] 텍스트 그리기 끝
+
+        start_time = time.time()
         execution_time = time.time() - start_time
-        
-        # 실시간 디버깅용 QA 로그 출력 (필요 시 주석 해제하여 사용)
-        # print(f"[QA 분석] 차량번호: {license_number} | 처리속도: {execution_time:.4f}초")
-        
-        # 팀원 1의 기존 규칙 준수: 키보드의 ESC(아스키코드 27)를 누르면 시연 프로그램 종료
-        if cv2.waitKey(30) == 27:
-            print("[시스템] 사용자의 요청에 의해 시연이 중단되었습니다.")
-            break
-            
-    cap.release()
-    cv2.destroyAllWindows()
-    print("==================================================")
-    print("[시스템] 파이프라인 관제 프로그램이 안전하게 종료되었습니다.")
-    print("==================================================")
+        license_number = self.last_license_number
+
+        # 3. UI 화면 출력
+        self.display_image(display_frame, self.screen_main)
+        self.display_image(edge_frame, self.screen_thresh)
+
+        t4 = time.time()  # ⏱️ [측정] UI 출력 끝
+
+        # ⏱️ [측정] 결과 출력 (총합 기준 FPS도 함께)
+        #total = t4 - t0
+        #print(f"[TIME] 전처리:{(t1-t0)*1000:5.0f}ms | "
+        #      f"YOLO:{(t2-t1)*1000:5.0f}ms | "
+        #      f"텍스트:{(t3-t2)*1000:5.0f}ms | "
+        #      f"UI:{(t4-t3)*1000:5.0f}ms | "
+        #      f"합계:{total*1000:5.0f}ms ({1/total if total>0 else 0:.1f} FPS)")
+
+        # 4. 번호판 처리 로직
+        if cropped_plate is not None:
+            try:
+                orig_h, orig_w = cropped_plate.shape[:2]
+                padding_size = 15
+
+                # 흑백본 패딩 (화면 표시·저장용)
+                padded_plate = cv2.copyMakeBorder(cropped_plate, padding_size, padding_size,
+                                                  padding_size, padding_size,
+                                                  cv2.BORDER_CONSTANT, value=[255, 255, 255])
+
+                # ✅ 컬러본 패딩 (OCR용) — 없을 수도 있으니 방어 처리
+                if cropped_plate_color is not None:
+                    padded_color = cv2.copyMakeBorder(cropped_plate_color, padding_size, padding_size,
+                                                      padding_size, padding_size,
+                                                      cv2.BORDER_CONSTANT, value=[255, 255, 255])
+                else:
+                    padded_color = None
+
+                # 화면 표시는 기존대로 흑백
+                self.display_image(padded_plate, self.screen_crop)
+
+                if not self.is_tracking:
+                    self.is_tracking = True
+                    self.cycle_images = []
+                    print("\n🎯 [TRACKING START] 새로운 차량 포착!")
+
+                if orig_h > 0:
+                    aspect_ratio = orig_w / orig_h
+                    if 1.5 <= aspect_ratio <= 5.5:
+                        # ✅ (흑백, 컬러) 쌍으로 저장
+                        self.cycle_images.append((padded_plate, padded_color))
+            except Exception as e:
+                print(f"🚨 [프로세스 오류] {e}")
+
+        else:
+            if self.is_tracking:
+                self.is_tracking = False
+                print("🏁 [TRACKING END] 차량이 화면을 벗어났습니다.")
+
+                if self.cycle_images:
+                    save_dir = "saved_plates"
+                    if not os.path.exists(save_dir):
+                        os.makedirs(save_dir)
+
+                    # 면적 상위 5장 선정 (흑백본 면적 기준)
+                    candidates = sorted(
+                        self.cycle_images,
+                        key=lambda p: p[0].shape[0] * p[0].shape[1],
+                        reverse=True
+                    )[:5]
+
+                    # 저장은 가장 큰 흑백본 1장 (기존과 동일)
+                    best_bin, best_color = candidates[0]
+
+                    timestamp = time.strftime("%Y%m%d_%H%M%S")
+
+                    if best_color is not None:
+                        file_path = os.path.join(save_dir, f"ocr_color_plate_{timestamp}.png")
+                        cv2.imwrite(file_path, best_color)
+                        print(f"✅ [OCR 컬러 저장 완료] 파일명: {file_path}")
+                    else:
+                        file_path = os.path.join(save_dir, f"ocr_fallback_bin_plate_{timestamp}.png")
+                        cv2.imwrite(file_path, best_bin)
+                        print(f"⚠️ [컬러본 없음 - 흑백 저장] 파일명: {file_path}")
+
+                    # 후보 5장 OCR → 형식 통과한 것만 모으기
+                    valid_results = []
+                    for _bin, _color in candidates:
+                        ocr_input = _color if _color is not None else _bin
+                        r = ocr.read_plate(ocr_input)
+                        if r:  # 형식 통과(빈 문자열 아님)한 것만
+                            valid_results.append(r)
+
+                    if valid_results:
+                        # 가장 많이 나온 결과 채택 (투표)
+                        best_result = Counter(valid_results).most_common(1)[0][0]
+                        license_number = best_result
+                        self.last_license_number = best_result
+                        print(f"🔤 [OCR 투표 결과] {best_result} (후보: {valid_results})")
+                    else:
+                        print("🚫 [형식 불일치] 유효한 번호판을 찾지 못했습니다.")
+                else:
+                    print("⚠️ [SYSTEM WARNING] 유효한 번호판 컷이 없어 저장하지 않았습니다.")
+
+                print("================================================  \n")
+
+            self.screen_crop.setText(f"🔍 추적 중... (RT: {execution_time:.3f}s)\nOCR: {license_number}")
+
+    def display_image(self, ocv_img, target_label):
+        if ocv_img is None or target_label is None:
+            return
+
+        img_copy = ocv_img.copy()
+        shape_info = img_copy.shape
+
+        if len(shape_info) == 2:
+            h, w = shape_info
+            bytes_per_line = w
+            q_img = QImage(img_copy.data, w, h, bytes_per_line, QImage.Format.Format_Grayscale8)
+        else:
+            h, w, ch = shape_info
+            bytes_per_line = ch * w
+            rgb_img = cv2.cvtColor(img_copy, cv2.COLOR_BGR2RGB)
+            q_img = QImage(rgb_img.data, w, h, bytes_per_line, QImage.Format.Format_RGB888)
+
+        pixmap = QPixmap.fromImage(q_img)
+        scaled_pixmap = pixmap.scaled(target_label.width(), target_label.height(),
+                                      Qt.AspectRatioMode.IgnoreAspectRatio, Qt.TransformationMode.SmoothTransformation)
+        target_label.setPixmap(scaled_pixmap)
+
+    def toggle_video(self):
+        if self.timer.isActive():
+            self.timer.stop()
+            self.btn_play.setText("재생")
+        else:
+            self.timer.start(30)
+            self.btn_play.setText("일시정지")
+
+    def closeEvent(self, event):
+        if self.cap.isOpened():
+            self.cap.release()
+        print("==================================================")
+        print("[시스템] 파이프라인 관제 프로그램이 안전하게 종료되었습니다.")
+        print("==================================================")
+        event.accept()
+
 
 if __name__ == "__main__":
-    main()
+    app = QApplication(sys.argv)
+    app_instance = LicensePlateApp()
+    app_instance.show()
+    sys.exit(app.exec())
