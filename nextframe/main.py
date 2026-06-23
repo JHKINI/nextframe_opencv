@@ -70,11 +70,11 @@ class LicensePlateApp(object):
         self.screen_thresh = self.window.screen_thresh
         self.screen_crop = self.window.screen_crop
 
-        self.video_filename = "car.mp4"
+        self.video_filename = "car8.mp4"
 
         if not os.path.exists(self.video_filename):
             print(f"[경로 오류] '{self.video_filename}' 파일이 존재하지 않습니다.")
-            print("💡 program/nextframe 폴더 안에 car.mp4를 넣어주세요.")
+            print("💡 program/nextframe 폴더 안에 car8.mp4를 넣어주세요.")
             sys.exit()
 
         self.cap = cv2.VideoCapture(self.video_filename)
@@ -155,12 +155,12 @@ class LicensePlateApp(object):
         t4 = time.time()  # ⏱️ [측정] UI 출력 끝
 
         # ⏱️ [측정] 결과 출력 (총합 기준 FPS도 함께)
-        total = t4 - t0
-        print(f"[TIME] 전처리:{(t1-t0)*1000:5.0f}ms | "
-              f"YOLO:{(t2-t1)*1000:5.0f}ms | "
-              f"텍스트:{(t3-t2)*1000:5.0f}ms | "
-              f"UI:{(t4-t3)*1000:5.0f}ms | "
-              f"합계:{total*1000:5.0f}ms ({1/total if total>0 else 0:.1f} FPS)")
+        #total = t4 - t0
+        #print(f"[TIME] 전처리:{(t1-t0)*1000:5.0f}ms | "
+        #      f"YOLO:{(t2-t1)*1000:5.0f}ms | "
+        #      f"텍스트:{(t3-t2)*1000:5.0f}ms | "
+        #      f"UI:{(t4-t3)*1000:5.0f}ms | "
+        #      f"합계:{total*1000:5.0f}ms ({1/total if total>0 else 0:.1f} FPS)")
 
         # 4. 번호판 처리 로직
         if cropped_plate is not None:
@@ -215,11 +215,18 @@ class LicensePlateApp(object):
                     )[:5]
 
                     # 저장은 가장 큰 흑백본 1장 (기존과 동일)
-                    best_bin = candidates[0][0]
+                    best_bin, best_color = candidates[0]
+
                     timestamp = time.strftime("%Y%m%d_%H%M%S")
-                    file_path = os.path.join(save_dir, f"best_plate_{timestamp}.png")
-                    cv2.imwrite(file_path, best_bin)
-                    print(f"✅ [저장 완료] 파일명: {file_path}")
+
+                    if best_color is not None:
+                        file_path = os.path.join(save_dir, f"ocr_color_plate_{timestamp}.png")
+                        cv2.imwrite(file_path, best_color)
+                        print(f"✅ [OCR 컬러 저장 완료] 파일명: {file_path}")
+                    else:
+                        file_path = os.path.join(save_dir, f"ocr_fallback_bin_plate_{timestamp}.png")
+                        cv2.imwrite(file_path, best_bin)
+                        print(f"⚠️ [컬러본 없음 - 흑백 저장] 파일명: {file_path}")
 
                     # 후보 5장 OCR → 형식 통과한 것만 모으기
                     valid_results = []
