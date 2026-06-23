@@ -143,12 +143,12 @@
          <string>
           QLabel #screen_main {
               border: 1px solid #2A2A32;
-              background-color: #09090B;
+              background-color: #28286c;
               border-radius: 10px;
               font-size: 14px;
               letter-spacing: 1px;
               color: #71717A;
-         }
+          }
          </string>
         </property>
         <property name="text">
@@ -159,6 +159,33 @@
         </property>
        </widget>
       </item>
+        <item>
+            <widget class="QLabel" name="result_label">
+            <property name="minimumSize">
+            <size>
+                <width>0</width>
+                <height>50</height>
+            </size>
+            </property>
+            <property name="styleSheet">
+            <string>
+                QLabel #result_label {
+                    background-color: #27272A; /* 대기 중 기본 색상 */
+                    color: #FFFFFF;
+                    border-radius: 8px;
+                    font-weight: 800;
+                    font-size: 18px;
+                }
+            </string>
+            </property>
+            <property name="text">
+            <string>대기 중...</string>
+            </property>
+            <property name="alignment">
+            <set>Qt::AlignmentFlag::AlignCenter</set>
+            </property>
+            </widget>
+            </item>
       <item>
        <layout class="QVBoxLayout" name="side_layout">
         <property name="spacing">
@@ -221,8 +248,8 @@
           <property name="styleSheet">
            <string>
             QLabel #screen_crop {
-                border: 2px dashed #10B981;
-                background-color: #FFFFFF;
+                border: 1px dashed #10B981;
+                background-color: #14241F;
                 border-radius: 8px;
                 color: #10B981;
                 font-weight: 600;
@@ -232,7 +259,7 @@
           </property>
           <property name="text">
            <string>WAITING FOR DETECTION...</string>
-        </property>
+          </property>
           <property name="alignment">
            <set>Qt::AlignmentFlag::AlignCenter</set>
           </property>
