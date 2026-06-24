@@ -1,13 +1,15 @@
 # main.py (이진화 제거 - 방법 A 적용 통합본)
 import sys
+import csv
+import shutil
 import cv2
 import time
 import os
 import numpy as np
-from PySide6.QtWidgets import QApplication, QMainWindow
+from PySide6.QtWidgets import QApplication, QMainWindow, QFileDialog
 from PySide6.QtUiTools import QUiLoader
 from PySide6.QtCore import QFile, QTimer, Qt
-from PySide6.QtGui import QImage, QPixmap
+from PySide6.QtGui import QFontMetrics, QImage, QPixmap
 from PIL import ImageFont, ImageDraw, Image
 from collections import Counter
 
@@ -48,7 +50,8 @@ def put_text_kr(img, text, position, font_size=30, color=(0, 255, 0)):
 class LicensePlateApp(object):
     def __init__(self):
         loader = QUiLoader()
-        ui_file_path = os.path.join(os.path.dirname(__file__), "main_window.ui")
+        ui_file_path = os.path.join(
+            os.path.dirname(__file__), "main_window.ui")
         ui_file = QFile(ui_file_path)
 
         if not ui_file.open(QFile.ReadOnly):
@@ -63,40 +66,62 @@ class LicensePlateApp(object):
             sys.exit(-1)
 
         self.window.setWindowTitle("Next Frame - YOLO 딥러닝 번호판 인식 시스템 (통합 관제)")
-        self.window.setFixedSize(1200, 750)
+        self.window.resize(1280, 940)
+        self.window.setMinimumSize(1280, 760)
 
         self.btn_play = self.window.btn_play
+        self.btn_select_video = self.window.btn_select_video
+        self.label_video_filename = self.window.label_video_filename
         self.screen_main = self.window.screen_main
         self.screen_thresh = self.window.screen_thresh
         self.screen_crop = self.window.screen_crop
 
-        self.video_filename = "car8.mp4"
+        # 하단 정보 패널 위젯
+        self.label_ocr_current = self.window.label_ocr_current
+        self.label_ocr_status = self.window.label_ocr_status
+        self.list_ocr_history = self.window.list_ocr_history
+        self.label_process_status = self.window.label_process_status
+        self.label_csv_status = self.window.label_csv_status
+        self.label_crop_path = self.window.label_crop_path
+        self.btn_download_csv = self.window.btn_download_csv
 
-        if not os.path.exists(self.video_filename):
-            print(f"[경로 오류] '{self.video_filename}' 파일이 존재하지 않습니다.")
-            print("💡 program/nextframe 폴더 안에 car8.mp4를 넣어주세요.")
-            sys.exit()
+        self.ocr_history = []  # (시간, 번호판) 최대 5개
+        self.csv_path = None
+        self.btn_download_csv.setEnabled(False)
+        self.btn_download_csv.clicked.connect(self.download_csv)
 
-        self.cap = cv2.VideoCapture(self.video_filename)
-        print(f"[시스템] '{self.video_filename}' 동영상 파이프라인 가동을 시작합니다.")
+        self.video_filename = None
+        self.cap = None
 
         self.btn_play.clicked.connect(self.toggle_video)
+        self.btn_select_video.clicked.connect(self.select_video)
         self.window.closeEvent = self.closeEvent
 
-        # 🚀 [사이클 제어 및 베스트 컷 변수]
+        # 사이클 제어 및 베스트 컷 변수
         self.is_tracking = False
-        # ✅ [변경] (흑백패딩본, 컬러패딩본) 쌍으로 저장
         self.cycle_images = []
         self.last_license_number = "인식 대기 중"
+        self.status_hold_until = 0.0
 
         self.timer = QTimer()
         self.timer.timeout.connect(self.update_pipeline)
-        self.timer.start(30)
+        self.btn_play.setEnabled(False)
 
     def show(self):
         self.window.show()
 
+    @staticmethod
+    def set_elided_label(label, text):
+        """긴 파일명과 경로는 말줄임표로 표시하고 전체 내용은 툴팁으로 제공한다."""
+        label.setToolTip(text)
+        available_width = max(40, label.contentsRect().width() - 8)
+        elided = QFontMetrics(label.font()).elidedText(
+            text, Qt.TextElideMode.ElideMiddle, available_width)
+        label.setText(elided)
+
     def update_pipeline(self):
+        if self.cap is None or not self.cap.isOpened():
+            return
         ret, frame = self.cap.read()
         if not ret:
             self.cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
@@ -119,12 +144,14 @@ class LicensePlateApp(object):
         else:
             gray_feed = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
             blur = cv2.GaussianBlur(gray_feed, (5, 5), 0)
-            edge_frame = cv2.adaptiveThreshold(blur, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 2)
+            edge_frame = cv2.adaptiveThreshold(
+                blur, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 2)
 
         t1 = time.time()  # ⏱️ [측정] 전처리 끝
 
         if detector:
-            display_frame, cropped_plate, cropped_plate_color = detector.detect_frame(frame, conf_thres=0.25)
+            display_frame, cropped_plate, cropped_plate_color = detector.detect_frame(
+                frame, conf_thres=0.25)
         else:
             display_frame = frame.copy()
             cropped_plate = None
@@ -155,8 +182,8 @@ class LicensePlateApp(object):
         t4 = time.time()  # ⏱️ [측정] UI 출력 끝
 
         # ⏱️ [측정] 결과 출력 (총합 기준 FPS도 함께)
-        #total = t4 - t0
-        #print(f"[TIME] 전처리:{(t1-t0)*1000:5.0f}ms | "
+        # total = t4 - t0
+        # print(f"[TIME] 전처리:{(t1-t0)*1000:5.0f}ms | "
         #      f"YOLO:{(t2-t1)*1000:5.0f}ms | "
         #      f"텍스트:{(t3-t2)*1000:5.0f}ms | "
         #      f"UI:{(t4-t3)*1000:5.0f}ms | "
@@ -173,7 +200,7 @@ class LicensePlateApp(object):
                                                   padding_size, padding_size,
                                                   cv2.BORDER_CONSTANT, value=[255, 255, 255])
 
-                # ✅ 컬러본 패딩 (OCR용) — 없을 수도 있으니 방어 처리
+                # 컬러본 패딩 (OCR용)
                 if cropped_plate_color is not None:
                     padded_color = cv2.copyMakeBorder(cropped_plate_color, padding_size, padding_size,
                                                       padding_size, padding_size,
@@ -181,25 +208,31 @@ class LicensePlateApp(object):
                 else:
                     padded_color = None
 
-                # 화면 표시는 기존대로 흑백
                 self.display_image(padded_plate, self.screen_crop)
 
                 if not self.is_tracking:
                     self.is_tracking = True
                     self.cycle_images = []
+                    self.label_process_status.setText("번호판 탐지됨")
+                    self.label_process_status.setStyleSheet(
+                        "font-size:13px; font-weight:600; color:#D97706;"
+                        "background-color:#FFFBEB; border-radius:6px; padding:6px 14px;"
+                        "font-family:'Segoe UI','Malgun Gothic',sans-serif;"
+                    )
                     print("\n🎯 [TRACKING START] 새로운 차량 포착!")
 
                 if orig_h > 0:
                     aspect_ratio = orig_w / orig_h
                     if 1.5 <= aspect_ratio <= 5.5:
-                        # ✅ (흑백, 컬러) 쌍으로 저장
                         self.cycle_images.append((padded_plate, padded_color))
             except Exception as e:
                 print(f"🚨 [프로세스 오류] {e}")
 
         else:
+            tracking_ended = False
             if self.is_tracking:
                 self.is_tracking = False
+                tracking_ended = True
                 print("🏁 [TRACKING END] 차량이 화면을 벗어났습니다.")
 
                 if self.cycle_images:
@@ -207,49 +240,102 @@ class LicensePlateApp(object):
                     if not os.path.exists(save_dir):
                         os.makedirs(save_dir)
 
-                    # 면적 상위 5장 선정 (흑백본 면적 기준)
                     candidates = sorted(
                         self.cycle_images,
                         key=lambda p: p[0].shape[0] * p[0].shape[1],
                         reverse=True
                     )[:5]
 
-                    # 저장은 가장 큰 흑백본 1장 (기존과 동일)
                     best_bin, best_color = candidates[0]
-
                     timestamp = time.strftime("%Y%m%d_%H%M%S")
 
                     if best_color is not None:
-                        file_path = os.path.join(save_dir, f"ocr_color_plate_{timestamp}.png")
+                        file_path = os.path.join(
+                            save_dir, f"ocr_color_plate_{timestamp}.png")
                         cv2.imwrite(file_path, best_color)
-                        print(f"✅ [OCR 컬러 저장 완료] 파일명: {file_path}")
                     else:
-                        file_path = os.path.join(save_dir, f"ocr_fallback_bin_plate_{timestamp}.png")
+                        file_path = os.path.join(
+                            save_dir, f"ocr_fallback_bin_plate_{timestamp}.png")
                         cv2.imwrite(file_path, best_bin)
-                        print(f"⚠️ [컬러본 없음 - 흑백 저장] 파일명: {file_path}")
 
-                    # 후보 5장 OCR → 형식 통과한 것만 모으기
+                    self.set_elided_label(
+                        self.label_crop_path,
+                        f"저장 경로: {os.path.abspath(file_path)}")
+
                     valid_results = []
-                    for _bin, _color in candidates:
-                        ocr_input = _color if _color is not None else _bin
-                        r = ocr.read_plate(ocr_input)
-                        if r:  # 형식 통과(빈 문자열 아님)한 것만
-                            valid_results.append(r)
+                    for plate_bin, plate_color in candidates:
+                        ocr_input = plate_color if plate_color is not None else plate_bin
+                        result = ocr.read_plate(ocr_input)
+                        if result:
+                            valid_results.append(result)
 
                     if valid_results:
-                        # 가장 많이 나온 결과 채택 (투표)
                         best_result = Counter(valid_results).most_common(1)[0][0]
                         license_number = best_result
                         self.last_license_number = best_result
-                        print(f"🔤 [OCR 투표 결과] {best_result} (후보: {valid_results})")
+
+                        self.label_ocr_current.setText(best_result)
+                        self.label_ocr_status.setText("OCR 성공")
+                        self.label_ocr_status.setStyleSheet(
+                            "font-size:13px; font-weight:600; color:#059669;"
+                            "background-color:#ECFDF5; border-radius:6px; padding:4px 12px;"
+                            "font-family:'Segoe UI','Malgun Gothic',sans-serif;"
+                        )
+
+                        history_time = time.strftime("%H:%M:%S")
+                        self.ocr_history.insert(
+                            0, f"{history_time}  /  {best_result}")
+                        self.ocr_history = self.ocr_history[:5]
+                        self.list_ocr_history.clear()
+                        for entry in self.ocr_history:
+                            self.list_ocr_history.addItem(entry)
+
+                        self.label_process_status.setText("OCR 진행 완료")
+                        self.label_process_status.setStyleSheet(
+                            "font-size:13px; font-weight:600; color:#059669;"
+                            "background-color:#ECFDF5; border-radius:6px; padding:6px 14px;"
+                            "font-family:'Segoe UI','Malgun Gothic',sans-serif;"
+                        )
+                        self.status_hold_until = time.time() + 2.0
+
+                        with open(self.csv_path, "a", newline="", encoding="utf-8-sig") as f:
+                            csv.writer(f).writerow([
+                                best_result,
+                                time.strftime("%Y-%m-%d %H:%M:%S"),
+                                file_path,
+                            ])
+                        self.label_csv_status.setText("CSV 저장 완료")
+                        self.label_csv_status.setStyleSheet(
+                            "font-size:12px; color:#059669;"
+                            "background-color:#ECFDF5; border-radius:6px; padding:4px 14px;"
+                            "font-family:'Segoe UI','Malgun Gothic',sans-serif;"
+                        )
                     else:
-                        print("🚫 [형식 불일치] 유효한 번호판을 찾지 못했습니다.")
-                else:
-                    print("⚠️ [SYSTEM WARNING] 유효한 번호판 컷이 없어 저장하지 않았습니다.")
+                        self.label_ocr_status.setText("OCR 실패")
+                        self.label_ocr_status.setStyleSheet(
+                            "font-size:13px; font-weight:600; color:#DC2626;"
+                            "background-color:#FEF2F2; border-radius:6px; padding:4px 12px;"
+                            "font-family:'Segoe UI','Malgun Gothic',sans-serif;"
+                        )
+                        self.label_process_status.setText("형식 불일치")
+                        self.label_process_status.setStyleSheet(
+                            "font-size:13px; font-weight:600; color:#DC2626;"
+                            "background-color:#FEF2F2; border-radius:6px; padding:6px 14px;"
+                            "font-family:'Segoe UI','Malgun Gothic',sans-serif;"
+                        )
+                        self.status_hold_until = time.time() + 2.0
 
                 print("================================================  \n")
 
-            self.screen_crop.setText(f"🔍 추적 중... (RT: {execution_time:.3f}s)\nOCR: {license_number}")
+            self.screen_crop.setText(
+                f"추적 중... (RT: {execution_time:.3f}s)\nOCR: {license_number}")
+            if not tracking_ended and time.time() >= self.status_hold_until:
+                self.label_process_status.setText("영상 처리 중")
+                self.label_process_status.setStyleSheet(
+                    "font-size:13px; font-weight:600; color:#2563EB;"
+                    "background-color:#EFF6FF; border-radius:6px; padding:6px 14px;"
+                    "font-family:'Segoe UI','Malgun Gothic',sans-serif;"
+                )
 
     def display_image(self, ocv_img, target_label):
         if ocv_img is None or target_label is None:
@@ -261,19 +347,24 @@ class LicensePlateApp(object):
         if len(shape_info) == 2:
             h, w = shape_info
             bytes_per_line = w
-            q_img = QImage(img_copy.data, w, h, bytes_per_line, QImage.Format.Format_Grayscale8)
+            q_img = QImage(img_copy.data, w, h, bytes_per_line,
+                           QImage.Format.Format_Grayscale8)
         else:
             h, w, ch = shape_info
             bytes_per_line = ch * w
             rgb_img = cv2.cvtColor(img_copy, cv2.COLOR_BGR2RGB)
-            q_img = QImage(rgb_img.data, w, h, bytes_per_line, QImage.Format.Format_RGB888)
+            q_img = QImage(rgb_img.data, w, h, bytes_per_line,
+                           QImage.Format.Format_RGB888)
 
         pixmap = QPixmap.fromImage(q_img)
         scaled_pixmap = pixmap.scaled(target_label.width(), target_label.height(),
-                                      Qt.AspectRatioMode.IgnoreAspectRatio, Qt.TransformationMode.SmoothTransformation)
+                                      Qt.AspectRatioMode.KeepAspectRatio,
+                                      Qt.TransformationMode.SmoothTransformation)
         target_label.setPixmap(scaled_pixmap)
 
     def toggle_video(self):
+        if self.cap is None or not self.cap.isOpened():
+            return
         if self.timer.isActive():
             self.timer.stop()
             self.btn_play.setText("재생")
@@ -281,8 +372,63 @@ class LicensePlateApp(object):
             self.timer.start(30)
             self.btn_play.setText("일시정지")
 
+    #  CSV 다운로드 기능
+    def select_video(self):
+        path, _ = QFileDialog.getOpenFileName(
+            self.window, "동영상 파일 선택", "", "동영상 파일 (*.mp4 *.avi *.mov *.mkv)"
+        )
+        if not path:
+            return
+        self.timer.stop()
+        if self.cap is not None:
+            self.cap.release()
+        self.video_filename = path
+        self.cap = cv2.VideoCapture(path)
+        self.set_elided_label(
+            self.label_video_filename, os.path.basename(path))
+        self.btn_play.setEnabled(True)
+        self.btn_play.setText("재생")
+        self.is_tracking = False
+        self.cycle_images = []
+        self.ocr_history = []
+        self.list_ocr_history.clear()
+        self.last_license_number = "인식 대기 중"
+        self.status_hold_until = 0.0
+        self.label_ocr_current.setText("인식 대기 중")
+        self._new_csv_session()
+        print(f"[시스템] '{os.path.basename(path)}' 동영상이 선택되었습니다.")
+
+    def _new_csv_session(self):
+        filename = f"ocr_log_{time.strftime('%Y%m%d_%H%M%S')}.csv"
+        self.csv_path = os.path.join(os.path.dirname(__file__), filename)
+        with open(self.csv_path, "w", newline="", encoding="utf-8-sig") as f:
+            csv.writer(f).writerow(["번호판", "인식시간", "crop이미지경로"])
+        self.set_elided_label(self.label_csv_status, filename)
+        self.btn_download_csv.setEnabled(True)
+        self.label_csv_status.setStyleSheet(
+            "font-size:12px; color:#64748B;"
+            "background-color:#F8FAFF; border-radius:6px; padding:4px 14px;"
+            "font-family:'Segoe UI','Malgun Gothic',sans-serif;"
+        )
+
+    def download_csv(self):
+        if not self.csv_path or not os.path.exists(self.csv_path):
+            self.label_csv_status.setText("저장된 CSV 없음")
+            return
+        dest, _ = QFileDialog.getSaveFileName(
+            self.window, "CSV 저장", "ocr_log.csv", "CSV 파일 (*.csv)"
+        )
+        if dest:
+            shutil.copy2(self.csv_path, dest)
+            self.label_csv_status.setText("다운로드 완료")
+            self.label_csv_status.setStyleSheet(
+                "font-size:12px; color:#059669;"
+                "background-color:#ECFDF5; border-radius:6px; padding:4px 14px;"
+                "font-family:'Segoe UI','Malgun Gothic',sans-serif;"
+            )
+
     def closeEvent(self, event):
-        if self.cap.isOpened():
+        if self.cap is not None and self.cap.isOpened():
             self.cap.release()
         print("==================================================")
         print("[시스템] 파이프라인 관제 프로그램이 안전하게 종료되었습니다.")

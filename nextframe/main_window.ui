@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1280</width>
-    <height>757</height>
+    <height>940</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -16,13 +16,13 @@
   <property name="styleSheet">
    <string>
     QMainWindow {
-        background-color: #121214;
+        background-color: #EFF6FF;
     }
-    QWidget #centralwidget {
-        background-color: #121214;
+    QWidget#centralwidget {
+        background-color: #EFF6FF;
     }
     QLabel {
-        color: #E2E8F0;
+        color: #1E293B;
         font-family: 'Segoe UI', 'Malgun Gothic', sans-serif;
     }
    </string>
@@ -30,56 +30,70 @@
   <widget class="QWidget" name="centralwidget">
    <layout class="QVBoxLayout" name="main_layout">
     <property name="spacing">
-     <number>15</number>
+     <number>12</number>
     </property>
     <property name="leftMargin">
      <number>20</number>
     </property>
     <property name="topMargin">
-     <number>20</number>
+     <number>16</number>
     </property>
     <property name="rightMargin">
      <number>20</number>
     </property>
     <property name="bottomMargin">
-     <number>20</number>
+     <number>16</number>
     </property>
+
+    <!-- ───────────── HEADER ───────────── -->
     <item>
      <widget class="QFrame" name="header_frame">
       <property name="minimumSize">
        <size>
         <width>0</width>
-        <height>60</height>
+        <height>58</height>
+       </size>
+      </property>
+      <property name="maximumSize">
+       <size>
+        <width>16777215</width>
+        <height>58</height>
        </size>
       </property>
       <property name="styleSheet">
        <string>
-        QFrame #header_frame {
-            background-color: #1A1A1E;
-            border-radius: 8px;
-            border: 1px solid #2A2A32;
+        QFrame {
+            background-color: #FFFFFF;
+            border-radius: 10px;
+            border-left: 4px solid #2563EB;
         }
        </string>
       </property>
       <layout class="QHBoxLayout" name="header_layout">
        <property name="leftMargin">
-        <number>20</number>
+        <number>18</number>
        </property>
        <property name="rightMargin">
-        <number>20</number>
+        <number>18</number>
+       </property>
+       <property name="topMargin">
+        <number>0</number>
+       </property>
+       <property name="bottomMargin">
+        <number>0</number>
        </property>
        <item>
         <widget class="QLabel" name="title_label">
          <property name="styleSheet">
-          <string>font-size: 18px; font-weight: 700; color: #FFFFFF;</string>
+          <string>font-size: 17px; font-weight: 700; color: #1E293B; border: none;</string>
          </property>
-         <property name="text">
-          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;🚗 NEXT FRAME &lt;span style=&quot; color:#10b981;&quot;&gt;| 차량 번호판 검출 시스템&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        <property name="text">
+         <string>NEXT FRAME  |  차량 번호판 검출 시스템</string>
          </property>
         </widget>
        </item>
        <item>
-        <spacer name="horizontalSpacer">
+        <spacer name="header_spacer">
          <property name="orientation">
           <enum>Qt::Orientation::Horizontal</enum>
          </property>
@@ -92,29 +106,71 @@
         </spacer>
        </item>
        <item>
-        <widget class="QPushButton" name="btn_play">
+        <widget class="QLabel" name="label_video_filename">
+         <property name="styleSheet">
+          <string>font-size: 12px; color: #64748B; font-family: 'Segoe UI', 'Malgun Gothic', sans-serif; border: none;</string>
+         </property>
+         <property name="text">
+          <string>선택된 파일 없음</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="btn_select_video">
          <property name="minimumSize">
           <size>
            <width>110</width>
-           <height>36</height>
+           <height>34</height>
           </size>
          </property>
          <property name="styleSheet">
           <string>
            QPushButton {
-               background-color: #27272A;
-               color: #E4E4E7;
-               border: 1px solid #3F3F46;
-               border-radius: 6px;
+               background-color: #FFFFFF;
+               color: #2563EB;
+               border: 1.5px solid #2563EB;
+               border-radius: 7px;
                font-weight: 600;
                font-size: 13px;
+               font-family: 'Segoe UI', 'Malgun Gothic', sans-serif;
            }
            QPushButton:hover {
-               background-color: #3F3F46;
-               border: 1px solid #52525B;
+               background-color: #EFF6FF;
            }
            QPushButton:pressed {
-               background-color: #18181B;
+               background-color: #DBEAFE;
+           }
+          </string>
+         </property>
+         <property name="text">
+          <string>동영상 선택</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="btn_play">
+         <property name="minimumSize">
+          <size>
+           <width>110</width>
+           <height>34</height>
+          </size>
+         </property>
+         <property name="styleSheet">
+          <string>
+           QPushButton {
+               background-color: #2563EB;
+               color: #FFFFFF;
+               border: none;
+               border-radius: 7px;
+               font-weight: 600;
+               font-size: 13px;
+               font-family: 'Segoe UI', 'Malgun Gothic', sans-serif;
+           }
+           QPushButton:hover {
+               background-color: #1D4ED8;
+           }
+           QPushButton:pressed {
+               background-color: #1E40AF;
            }
           </string>
          </property>
@@ -126,28 +182,44 @@
       </layout>
      </widget>
     </item>
+
+    <!-- ───────────── VIDEO ROW ───────────── -->
     <item>
      <layout class="QHBoxLayout" name="video_layout">
       <property name="spacing">
-       <number>15</number>
+       <number>12</number>
       </property>
+
+      <!-- 메인 영상 -->
       <item>
        <widget class="QLabel" name="screen_main">
         <property name="sizePolicy">
-         <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-          <horstretch>7</horstretch>
-          <verstretch>0</verstretch>
+          <sizepolicy hsizetype="Fixed" vsizetype="Expanding">
+          <horstretch>0</horstretch>
+          <verstretch>1</verstretch>
          </sizepolicy>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>860</width>
+          <height>420</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>860</width>
+          <height>16777215</height>
+         </size>
         </property>
         <property name="styleSheet">
          <string>
-          QLabel #screen_main {
-              border: 1px solid #2A2A32;
-              background-color: #28286c;
+          QLabel {
+              border: 2px solid #BFDBFE;
+              background-color: #DBEAFE;
               border-radius: 10px;
               font-size: 14px;
-              letter-spacing: 1px;
-              color: #71717A;
+              color: #93C5FD;
+              font-family: 'Segoe UI', 'Malgun Gothic', sans-serif;
           }
          </string>
         </property>
@@ -159,101 +231,118 @@
         </property>
        </widget>
       </item>
-        <item>
-            <widget class="QLabel" name="result_label">
-            <property name="minimumSize">
-            <size>
-                <width>0</width>
-                <height>50</height>
-            </size>
-            </property>
-            <property name="styleSheet">
-            <string>
-                QLabel #result_label {
-                    background-color: #27272A; /* 대기 중 기본 색상 */
-                    color: #FFFFFF;
-                    border-radius: 8px;
-                    font-weight: 800;
-                    font-size: 18px;
-                }
-            </string>
-            </property>
-            <property name="text">
-            <string>대기 중...</string>
-            </property>
-            <property name="alignment">
-            <set>Qt::AlignmentFlag::AlignCenter</set>
-            </property>
-            </widget>
-            </item>
+
+      <!-- 사이드 패널 (이진화 + 크롭) -->
       <item>
        <layout class="QVBoxLayout" name="side_layout">
         <property name="spacing">
-         <number>10</number>
+         <number>8</number>
         </property>
+
         <item>
          <widget class="QLabel" name="label_thresh_title">
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>22</height>
+           </size>
+          </property>
           <property name="styleSheet">
-           <string>font-size: 13px; font-weight: 600; color: #A1A1AA; margin-top: 5px;</string>
+           <string>font-size: 12px; font-weight: 600; color: #64748B; font-family: 'Segoe UI', 'Malgun Gothic', sans-serif;</string>
           </property>
           <property name="text">
-           <string>⚙️ 이진화 영상 분석 (Advanced Thresh)</string>
+           <string>전처리 영상 분석 (Canny Edge)</string>
           </property>
          </widget>
         </item>
+
         <item>
          <widget class="QLabel" name="screen_thresh">
           <property name="sizePolicy">
-           <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
-            <horstretch>3</horstretch>
-            <verstretch>3</verstretch>
+            <sizepolicy hsizetype="Fixed" vsizetype="Expanding">
+            <horstretch>0</horstretch>
+            <verstretch>1</verstretch>
            </sizepolicy>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>368</width>
+            <height>230</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>368</width>
+            <height>16777215</height>
+           </size>
           </property>
           <property name="styleSheet">
            <string>
-            QLabel #screen_thresh {
-                border: 1px solid #2A2A32;
-                background-color: #09090B;
+            QLabel {
+                border: 1px solid #BFDBFE;
+                background-color: #F8FAFF;
                 border-radius: 8px;
-                color: #52525B;
+                color: #94A3B8;
+                font-family: 'Segoe UI', 'Malgun Gothic', sans-serif;
             }
            </string>
           </property>
           <property name="text">
-           <string>BINARY FEED</string>
+           <string>EDGE FEED</string>
           </property>
           <property name="alignment">
            <set>Qt::AlignmentFlag::AlignCenter</set>
           </property>
          </widget>
         </item>
+
         <item>
          <widget class="QLabel" name="label_crop_title">
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>22</height>
+           </size>
+          </property>
           <property name="styleSheet">
-           <string>font-size: 13px; font-weight: 600; color: #A1A1AA; margin-top: 10px;</string>
+           <string>font-size: 12px; font-weight: 600; color: #64748B; font-family: 'Segoe UI', 'Malgun Gothic', sans-serif;</string>
           </property>
           <property name="text">
-           <string>🔍 실시간 번호판 추출 (ROI Crop)</string>
+           <string>번호판 추출 (ROI Crop)</string>
           </property>
          </widget>
         </item>
+
         <item>
          <widget class="QLabel" name="screen_crop">
           <property name="sizePolicy">
-           <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
-            <horstretch>3</horstretch>
-            <verstretch>2</verstretch>
+            <sizepolicy hsizetype="Fixed" vsizetype="Expanding">
+            <horstretch>0</horstretch>
+            <verstretch>1</verstretch>
            </sizepolicy>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>368</width>
+            <height>230</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>368</width>
+            <height>16777215</height>
+           </size>
           </property>
           <property name="styleSheet">
            <string>
-            QLabel #screen_crop {
-                border: 1px dashed #10B981;
-                background-color: #14241F;
+            QLabel {
+                border: 1px dashed #93C5FD;
+                background-color: #EFF6FF;
                 border-radius: 8px;
-                color: #10B981;
+                color: #3B82F6;
                 font-weight: 600;
                 font-size: 12px;
+                font-family: 'Segoe UI', 'Malgun Gothic', sans-serif;
             }
            </string>
           </property>
@@ -265,10 +354,454 @@
           </property>
          </widget>
         </item>
+
        </layout>
       </item>
      </layout>
     </item>
+
+    <!-- ───────────── BOTTOM INFO PANEL ───────────── -->
+    <item>
+     <widget class="QFrame" name="bottom_frame">
+      <property name="minimumSize">
+       <size>
+        <width>0</width>
+        <height>210</height>
+       </size>
+      </property>
+      <property name="maximumSize">
+       <size>
+        <width>16777215</width>
+        <height>210</height>
+       </size>
+      </property>
+      <property name="styleSheet">
+       <string>
+        QFrame {
+            background-color: #FFFFFF;
+            border-radius: 10px;
+            border: 1px solid #BFDBFE;
+        }
+       </string>
+      </property>
+      <layout class="QHBoxLayout" name="bottom_layout">
+       <property name="spacing">
+        <number>0</number>
+       </property>
+       <property name="leftMargin">
+        <number>0</number>
+       </property>
+       <property name="topMargin">
+        <number>0</number>
+       </property>
+       <property name="rightMargin">
+        <number>0</number>
+       </property>
+       <property name="bottomMargin">
+        <number>0</number>
+       </property>
+
+       <!-- ── 현재 OCR 결과 ── -->
+       <item>
+        <widget class="QFrame" name="ocr_result_frame">
+         <property name="styleSheet">
+          <string>
+           QFrame {
+               background-color: transparent;
+               border: none;
+               border-radius: 0px;
+           }
+          </string>
+         </property>
+         <layout class="QVBoxLayout" name="ocr_result_layout">
+          <property name="leftMargin">
+           <number>22</number>
+          </property>
+          <property name="topMargin">
+           <number>18</number>
+          </property>
+          <property name="rightMargin">
+           <number>22</number>
+          </property>
+          <property name="bottomMargin">
+           <number>18</number>
+          </property>
+          <property name="spacing">
+           <number>8</number>
+          </property>
+          <item>
+           <widget class="QLabel" name="label_ocr_section_title">
+            <property name="styleSheet">
+             <string>font-size: 11px; font-weight: 700; color: #2563EB; letter-spacing: 1px; font-family: 'Segoe UI', 'Malgun Gothic', sans-serif;</string>
+            </property>
+            <property name="text">
+             <string>현재 OCR 결과</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="label_ocr_current">
+            <property name="minimumSize">
+             <size>
+              <width>200</width>
+              <height>60</height>
+             </size>
+            </property>
+            <property name="styleSheet">
+             <string>
+              QLabel {
+                  font-size: 26px;
+                  font-weight: 600;
+                  color: #1E293B;
+                  background-color: #EFF6FF;
+                  border-radius: 8px;
+                  padding: 8px 16px;
+                  font-family: 'Segoe UI', 'Malgun Gothic', sans-serif;
+              }
+             </string>
+            </property>
+            <property name="text">
+             <string>인식 대기 중</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignmentFlag::AlignCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="label_ocr_status">
+            <property name="minimumSize">
+             <size>
+              <width>0</width>
+              <height>28</height>
+             </size>
+            </property>
+            <property name="styleSheet">
+             <string>
+              QLabel {
+                  font-size: 13px;
+                  font-weight: 600;
+                  color: #64748B;
+                  background-color: #F1F5F9;
+                  border-radius: 6px;
+                  padding: 4px 12px;
+                  font-family: 'Segoe UI', 'Malgun Gothic', sans-serif;
+              }
+             </string>
+            </property>
+            <property name="text">
+             <string>대기 중</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignmentFlag::AlignCenter</set>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+
+       <!-- ── 구분선 1 ── -->
+       <item>
+        <widget class="QFrame" name="divider_1">
+         <property name="minimumSize">
+          <size>
+           <width>1</width>
+           <height>0</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>1</width>
+           <height>16777215</height>
+          </size>
+         </property>
+         <property name="styleSheet">
+          <string>QFrame { background-color: #BFDBFE; border: none; border-radius: 0px; }</string>
+         </property>
+        </widget>
+       </item>
+
+       <!-- ── 최근 인식 기록 ── -->
+       <item>
+        <widget class="QFrame" name="history_frame">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+           <horstretch>1</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="styleSheet">
+          <string>
+           QFrame {
+               background-color: transparent;
+               border: none;
+               border-radius: 0px;
+           }
+          </string>
+         </property>
+         <layout class="QVBoxLayout" name="history_layout">
+          <property name="leftMargin">
+           <number>22</number>
+          </property>
+          <property name="topMargin">
+           <number>18</number>
+          </property>
+          <property name="rightMargin">
+           <number>22</number>
+          </property>
+          <property name="bottomMargin">
+           <number>18</number>
+          </property>
+          <property name="spacing">
+           <number>8</number>
+          </property>
+          <item>
+           <widget class="QLabel" name="label_history_section_title">
+            <property name="styleSheet">
+             <string>font-size: 11px; font-weight: 700; color: #2563EB; letter-spacing: 1px; font-family: 'Segoe UI', 'Malgun Gothic', sans-serif;</string>
+            </property>
+            <property name="text">
+             <string>최근 인식 기록</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QListWidget" name="list_ocr_history">
+            <property name="styleSheet">
+             <string>
+              QListWidget {
+                  background-color: #F8FAFF;
+                  border: 1px solid #BFDBFE;
+                  border-radius: 5px;
+                  color: #1E293B;
+                  font-size: 13px;
+                  font-family: 'Segoe UI', 'Malgun Gothic', sans-serif;
+                  outline: none;
+              }
+              QListWidget::item {
+                  padding: 5px 12px;
+                  border-bottom: 1px solid #EFF6FF;
+              }
+              QListWidget::item:selected {
+                  background-color: #DBEAFE;
+                  color: #1E40AF;
+              }
+              QListWidget::item:last-child {
+                  border-bottom: none;
+              }
+             </string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+
+       <!-- ── 구분선 2 ── -->
+       <item>
+        <widget class="QFrame" name="divider_2">
+         <property name="minimumSize">
+          <size>
+           <width>1</width>
+           <height>0</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>1</width>
+           <height>16777215</height>
+          </size>
+         </property>
+         <property name="styleSheet">
+          <string>QFrame { background-color: #BFDBFE; border: none; border-radius: 0px; }</string>
+         </property>
+        </widget>
+       </item>
+
+       <!-- ── 상태 메시지 ── -->
+       <item>
+        <widget class="QFrame" name="status_frame">
+         <property name="minimumSize">
+          <size>
+           <width>340</width>
+           <height>0</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>340</width>
+           <height>16777215</height>
+          </size>
+         </property>
+         <property name="styleSheet">
+          <string>
+           QFrame {
+               background-color: transparent;
+               border: none;
+               border-radius: 0px;
+           }
+          </string>
+         </property>
+         <layout class="QVBoxLayout" name="status_layout">
+          <property name="leftMargin">
+           <number>22</number>
+          </property>
+          <property name="topMargin">
+           <number>18</number>
+          </property>
+          <property name="rightMargin">
+           <number>22</number>
+          </property>
+          <property name="bottomMargin">
+           <number>18</number>
+          </property>
+          <property name="spacing">
+           <number>8</number>
+          </property>
+          <item>
+           <widget class="QLabel" name="label_status_section_title">
+            <property name="styleSheet">
+             <string>font-size: 11px; font-weight: 700; color: #2563EB; letter-spacing: 1px; font-family: 'Segoe UI', 'Malgun Gothic', sans-serif;</string>
+            </property>
+            <property name="text">
+             <string>처리 상태</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="label_process_status">
+            <property name="minimumSize">
+             <size>
+              <width>0</width>
+              <height>32</height>
+             </size>
+            </property>
+            <property name="styleSheet">
+             <string>
+              QLabel {
+                  font-size: 13px;
+                  font-weight: 600;
+                  color: #2563EB;
+                  background-color: #EFF6FF;
+                  border-radius: 6px;
+                  padding: 6px 14px;
+                  font-family: 'Segoe UI', 'Malgun Gothic', sans-serif;
+              }
+             </string>
+            </property>
+            <property name="text">
+             <string>영상 처리 중</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="label_csv_status">
+            <property name="minimumSize">
+             <size>
+              <width>0</width>
+              <height>28</height>
+             </size>
+            </property>
+            <property name="styleSheet">
+             <string>
+              QLabel {
+                  font-size: 12px;
+                  color: #94A3B8;
+                  background-color: #F8FAFF;
+                  border-radius: 6px;
+                  padding: 4px 14px;
+                  font-family: 'Segoe UI', 'Malgun Gothic', sans-serif;
+              }
+             </string>
+            </property>
+            <property name="text">
+             <string>CSV 대기 중</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="label_crop_path">
+            <property name="minimumSize">
+             <size>
+              <width>0</width>
+              <height>28</height>
+             </size>
+            </property>
+            <property name="styleSheet">
+             <string>
+              QLabel {
+                  font-size: 11px;
+                  color: #94A3B8;
+                  background-color: #F8FAFF;
+                  border-radius: 6px;
+                  padding: 4px 14px;
+                  font-family: 'Segoe UI', 'Malgun Gothic', sans-serif;
+              }
+             </string>
+            </property>
+            <property name="text">
+             <string>저장 경로: —</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="btn_download_csv">
+            <property name="minimumSize">
+             <size>
+              <width>0</width>
+              <height>32</height>
+             </size>
+            </property>
+            <property name="styleSheet">
+             <string>
+              QPushButton {
+                  background-color: #2563EB;
+                  color: #FFFFFF;
+                  border: none;
+                  border-radius: 7px;
+                  font-weight: 600;
+                  font-size: 12px;
+                  font-family: 'Segoe UI', 'Malgun Gothic', sans-serif;
+              }
+              QPushButton:hover {
+                  background-color: #1D4ED8;
+              }
+              QPushButton:pressed {
+                  background-color: #1E40AF;
+              }
+              QPushButton:disabled {
+                  background-color: #BFDBFE;
+                  color: #93C5FD;
+              }
+             </string>
+            </property>
+            <property name="text">
+             <string>CSV 다운로드</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <spacer name="status_spacer">
+            <property name="orientation">
+             <enum>Qt::Orientation::Vertical</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>20</width>
+              <height>40</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+         </layout>
+        </widget>
+       </item>
+
+      </layout>
+     </widget>
+    </item>
+
    </layout>
   </widget>
  </widget>
