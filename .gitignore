@@ -1,0 +1,9 @@
+# .gitignore 파일 내용
+__pycache__/
+*.pyc
+*.mp4
+saved_plates/
+.ipynb_checkpoints/
+.vscode/
+*.txt
+*.jpg
