@@ -1,4 +1,5 @@
-# 🚗 NextFrame - AI 번호판 탐지 및 OCR 시스템
+# 🚗 자동 번호판 인식 시스템
+### NextFrame (Automatic License Plate Recognition)
 
 > YOLO 기반 번호판 탐지와 EasyOCR을 활용하여 차량 번호판을 인식하고 GUI를 통해 실시간으로 결과를 확인할 수 있는 번호판 인식 시스템입니다.
 
@@ -91,6 +92,7 @@ nextframe_opencv
     ├── detection.py                 # YOLO 번호판 탐지
     ├── ocr.py                       # EasyOCR 문자 인식
     ├── preprocess_v2.py             # 영상 전처리
+    ├── license_plate_yolo_training.ipynb   # YOLO 모델 학습 및 Fine-Tuning
     ├── plate_detector.py            # 번호판 탐지 모듈
     ├── train.py                     # YOLO 모델 학습
     ├── ui_layout.py                 # GUI 레이아웃
@@ -180,29 +182,30 @@ nextframe_opencv
 ### 1. 저장소 클론
 
 ```bash
-git clone <Repository_URL>
+git clone https://github.com/JHKINI/nextframe_opencv.git
 cd NEXTFRAME
 ```
+### 2. 클론한 프로젝트의 `nextframe` 폴더를 Visual Studio Code에서 엽니다.
 
-### 2. Conda 가상환경 생성
+### 3. Conda 가상환경 생성
 
 ```bash
-conda create -n nextframe python=3.12
+conda create -n project1 python=3.12.13
 ```
 
-### 3. Conda 가상환경 활성화
+### 4. Conda 가상환경 활성화
 
 ```bash
 conda activate project1
 ```
 
-### 4. 필수 라이브러리 설치
+### 5. 필수 라이브러리 설치
 
 ```bash
 pip install -r requirements.txt
 ```
 
-### 5. 프로그램 실행
+### 6. 프로그램 실행
 
 ```bash
 python main.py
