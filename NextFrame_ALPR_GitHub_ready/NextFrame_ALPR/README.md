@@ -50,15 +50,14 @@ YOLO26n 기반 객체 탐지 모델을 학습해 차량 이미지와 영상에�
 - `runs/detect/license_plate_yolo26/results.png`: 학습 결과 그래프
 - `runs/detect/license_plate_yolo26/results.csv`: epoch별 학습 지표
 - `runs/detect/predict*/`: 이미지·영상 추론 결과
-
-## 저장소 구성 예시
+## 파일구성
 ```text
 NextFrame_ALPR/
 ├── README.md
 ├── NextFrame_ALPR_YOLO26_clean.ipynb
 └── results/
     ├── training_result.png
-    └── inference_sample.jpg
+    └── license_plate_result.zip
 ```
 
 데이터셋 원본, 대용량 가중치(`best.pt`), 원본 영상은 용량 및 배포 권한을 확인한 뒤 별도 관리합니다.
